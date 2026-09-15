@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   reactStrictMode: true,
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
   experimental: {
-    optimizePackageImports: ['framer-motion', 'gsap'],
+    optimizePackageImports: ['framer-motion'],
   },
   webpack: (config, { isServer }) => {
     // Handle Three.js on server (disable)
