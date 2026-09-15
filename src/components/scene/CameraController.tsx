@@ -9,8 +9,7 @@ import { CAMERA_PATH } from '@/data/planets';
 
 export function CameraController() {
   const { camera } = useThree();
-  const scrollProgress = useUniverseStore((s) => s.scrollProgress);
-  const mouseNorm = useUniverseStore((s) => s.mouseNorm);
+
 
   // Smoothed values
   const smooth = useRef({ x: 0, y: 0, z: 12, rx: 0, ry: 0, rz: 0, fov: 60 });
@@ -18,6 +17,8 @@ export function CameraController() {
   const mouseSmooth = useRef({ x: 0, y: 0 });
 
   useFrame((_, delta) => {
+    const { scrollProgress, mouseNorm } = useUniverseStore.getState();
+    delta = Math.min(delta, 0.05);
     timeRef.current += delta;
     const t = timeRef.current;
 
@@ -28,9 +29,9 @@ export function CameraController() {
     const { pos, rot, fov } = interpolateCameraPath(CAMERA_PATH, scrollProgress);
 
     // Inertia — different speeds for position vs rotation
-    const posSpeed = 0.032;
-    const rotSpeed = 0.025;
-    const fovSpeed = 0.04;
+    const posSpeed = 1 - Math.exp(-2 * delta);
+    const rotSpeed = 1 - Math.exp(-1.5 * delta);
+    const fovSpeed = 1 - Math.exp(-2.4 * delta);
 
     smooth.current.x   += (pos[0] - smooth.current.x) * posSpeed;
     smooth.current.y   += (pos[1] - smooth.current.y) * posSpeed;

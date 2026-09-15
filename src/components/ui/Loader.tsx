@@ -22,30 +22,19 @@ const LOADING_PHRASES = [
 ];
 
 export function Loader() {
-  const { isLoaded, setLoaded } = useUniverseStore();
+  const isLoaded = useUniverseStore((s) => s.isLoaded);
   const [progress, setProgress] = useState(0);
   const [phrase, setPhrase] = useState(0);
 
   useEffect(() => {
+    if (isLoaded) return;
     const phraseInterval = setInterval(() => {
       setPhrase((p) => (p + 1) % LOADING_PHRASES.length);
     }, 900);
 
-    const tick = setInterval(() => {
-      setProgress((p) => {
-        const next = p + Math.random() * 6 + 2;
-        if (next >= 100) {
-          clearInterval(tick);
-          clearInterval(phraseInterval);
-          setTimeout(setLoaded, 500);
-          return 100;
-        }
-        return next;
-      });
-    }, 60);
-
+    const tick = setInterval(() => setProgress((p) => Math.min(90, p + 5)), 150);
     return () => { clearInterval(tick); clearInterval(phraseInterval); };
-  }, [setLoaded]);
+  }, [isLoaded]);
 
   return (
     <AnimatePresence>
@@ -56,6 +45,7 @@ export function Loader() {
           exit={{ opacity: 0 }}
           transition={{ duration: 1.2, ease: 'easeInOut' }}
         >
+          <button className="journey-button" style={{ position: 'absolute', bottom: 40 }} onClick={() => useUniverseStore.getState().setReadingMode(true)}>Continue in reading mode</button>
           {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}

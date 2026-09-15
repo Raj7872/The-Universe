@@ -142,10 +142,13 @@ export function Planet({ data }: PlanetProps) {
   const glowRef    = useRef<THREE.PointLight>(null);
   const timeRef    = useRef(Math.random() * Math.PI * 2);
 
-  const { openPlanet, setHoveredPlanet, hoveredPlanet } = useUniverseStore();
+  const openPlanet = useUniverseStore((s) => s.openPlanet);
+  const setHoveredPlanet = useUniverseStore((s) => s.setHoveredPlanet);
+  const isHovered = useUniverseStore((s) => s.hoveredPlanet === data.id);
+  const lite = useUniverseStore((s) => s.liteMode);
   const { gl } = useThree();
 
-  const isHovered = hoveredPlanet === data.id;
+
 
   const colors = useMemo(() => ({
     primary:    new THREE.Color(data.theme.primary),
@@ -186,12 +189,12 @@ export function Planet({ data }: PlanetProps) {
 
   const handlePointerOver = useCallback(() => {
     setHoveredPlanet(data.id);
-    gl.domElement.style.cursor = 'none';
+    gl.domElement.style.cursor = 'pointer';
   }, [data.id, setHoveredPlanet, gl.domElement]);
 
   const handlePointerOut = useCallback(() => {
     setHoveredPlanet(null);
-    gl.domElement.style.cursor = 'none';
+    gl.domElement.style.cursor = 'auto';
   }, [setHoveredPlanet, gl.domElement]);
 
   const handleClick = useCallback(() => {
@@ -217,7 +220,7 @@ export function Planet({ data }: PlanetProps) {
         onClick={handleClick}
         castShadow
       >
-        <sphereGeometry args={[data.size, 64, 64]} />
+        <sphereGeometry args={[data.size, lite ? 24 : 48, lite ? 16 : 32]} />
         <meshStandardMaterial
           color={colors.primary}
           emissive={colors.emissive}
@@ -229,7 +232,7 @@ export function Planet({ data }: PlanetProps) {
 
       {/* Atmosphere glow rim */}
       <mesh ref={atmoRef}>
-        <sphereGeometry args={[data.size * 1.20, 32, 32]} />
+        <sphereGeometry args={[data.size * 1.20, 24, 16]} />
         <shaderMaterial
           vertexShader={atmoVert}
           fragmentShader={atmoFrag}

@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import type { PlanetData } from '@/types';
 
 interface UniverseStore {
+  readingMode: boolean;
+  setReadingMode: (reading: boolean) => void;
+  liteMode: boolean;
+  setLiteMode: (lite: boolean) => void;
+  visitedPlanets: string[];
   // Scroll progress 0–1
   scrollProgress: number;
   setScrollProgress: (p: number) => void;
@@ -36,11 +41,16 @@ interface UniverseStore {
 }
 
 export const useUniverseStore = create<UniverseStore>((set) => ({
+  readingMode: false,
+  setReadingMode: (readingMode) => set({ readingMode, isLoaded: true }),
+  liteMode: true,
+  setLiteMode: (liteMode) => set({ liteMode }),
+  visitedPlanets: [],
   scrollProgress:    0,
   setScrollProgress: (p) => set({ scrollProgress: p }),
 
   activePlanet: null,
-  openPlanet:   (planet) => set({ activePlanet: planet }),
+  openPlanet:   (planet) => set((s) => ({ activePlanet: planet, visitedPlanets: [...new Set([...s.visitedPlanets, planet.id])] })),
   closePlanet:  ()       => set({ activePlanet: null }),
 
   hoveredPlanet:    null,

@@ -6,7 +6,7 @@ import { CONSTELLATIONS } from '@/data/planets';
 
 export function ConstellationOverlay() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scrollProgress = useUniverseStore((s) => s.scrollProgress);
+
   const animRef = useRef<number>(0);
   const lineProgressRef = useRef<number[]>(CONSTELLATIONS.map(() => 0));
 
@@ -26,6 +26,7 @@ export function ConstellationOverlay() {
 
     function draw() {
       if (!canvas || !ctx) return;
+      const { scrollProgress } = useUniverseStore.getState();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       CONSTELLATIONS.forEach((def, di) => {
@@ -110,7 +111,7 @@ export function ConstellationOverlay() {
       cancelAnimationFrame(animRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, [scrollProgress]);
+  }, []);
 
   return (
     <canvas

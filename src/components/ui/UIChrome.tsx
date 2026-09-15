@@ -57,7 +57,8 @@ function ProgressNav() {
 }
 
 function AudioButton() {
-  const { audioEnabled, toggleAudio } = useUniverseStore();
+  const audioEnabled = useUniverseStore((s) => s.audioEnabled);
+  const toggleAudio = useUniverseStore((s) => s.toggleAudio);
   useAmbientAudio();
 
   return (
@@ -72,6 +73,7 @@ function AudioButton() {
         cursor: 'pointer',
       }}
       aria-label="Toggle ambient audio"
+      aria-pressed={audioEnabled}
     >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
         stroke={audioEnabled ? '#c9a84c' : 'rgba(245,240,232,0.45)'}
@@ -92,7 +94,8 @@ function AudioButton() {
 }
 
 function EasterEggToast() {
-  const { foundEasterEggMessage, clearEasterEggMessage } = useUniverseStore();
+  const foundEasterEggMessage = useUniverseStore((s) => s.foundEasterEggMessage);
+  const clearEasterEggMessage = useUniverseStore((s) => s.clearEasterEggMessage);
 
   useEffect(() => {
     if (foundEasterEggMessage) {
@@ -106,6 +109,7 @@ function EasterEggToast() {
       {foundEasterEggMessage && (
         <motion.div
           key="toast"
+          role="status"
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
@@ -139,7 +143,7 @@ function HoverHint() {
           className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
           style={{ ...SANS, fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: 'rgba(245,240,232,0.28)' }}
         >
-          Hover planets to explore · Scroll to journey
+          Tap planets to explore · Scroll to journey
         </motion.div>
       )}
     </AnimatePresence>

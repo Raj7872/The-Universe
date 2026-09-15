@@ -6,7 +6,7 @@ import { useUniverseStore } from '@/lib/store';
 export function useAmbientAudio() {
   const audioEnabled  = useUniverseStore((s) => s.audioEnabled);
   const masterVolume  = useUniverseStore((s) => s.masterVolume);
-  const scrollProgress = useUniverseStore((s) => s.scrollProgress);
+  const finale = useUniverseStore((s) => s.scrollProgress > 0.82);
 
   const ctxRef        = useRef<AudioContext | null>(null);
   const masterRef     = useRef<GainNode | null>(null);
@@ -46,7 +46,8 @@ export function useAmbientAudio() {
       });
     } else {
       master.gain.setTargetAtTime(0, ctx.currentTime, 1.0);
-      setTimeout(() => ctx.state === 'running' && ctx.suspend(), 1600);
+      const timer = setTimeout(() => { if (ctx.state === 'running') void ctx.suspend(); }, 1600);
+      return () => clearTimeout(timer);
     }
   }, [audioEnabled, masterVolume]);
 
@@ -55,13 +56,16 @@ export function useAmbientAudio() {
     const ctx = ctxRef.current;
     const master = masterRef.current;
     if (!ctx || !master || !audioEnabled) return;
-    const target = scrollProgress > 0.82 ? masterVolume * 0.11 : masterVolume * 0.07;
+    const target = finale ? masterVolume * 0.11 : masterVolume * 0.07;
     master.gain.setTargetAtTime(target, ctx.currentTime, 2.5);
-  }, [scrollProgress, audioEnabled, masterVolume]);
+  }, [finale, audioEnabled, masterVolume]);
 
   useEffect(() => {
     return () => {
-      ctxRef.current?.close();
+      void ctxRef.current?.close();
+      ctxRef.current = null;
+      masterRef.current = null;
+      builtRef.current = false;
     };
   }, []);
 }

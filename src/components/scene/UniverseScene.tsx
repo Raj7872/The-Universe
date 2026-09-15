@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { StarField }        from './StarField';
@@ -12,7 +13,7 @@ import { PLANETS }          from '@/data/planets';
 import { useUniverseStore } from '@/lib/store';
 
 function SceneContent() {
-  const mouseNorm = useUniverseStore((s) => s.mouseNorm);
+  const lite = useUniverseStore((s) => s.liteMode);
 
   return (
     <>
@@ -27,11 +28,11 @@ function SceneContent() {
       <CameraController />
 
       {/* Three star-field layers at different depths for parallax */}
-      <StarField count={2500} spread={230} sizeRange={[0.4, 1.8]} depth={15} mouse={mouseNorm} />
-      <StarField count={1000} spread={180} sizeRange={[1.0, 3.0]} depth={10} mouse={mouseNorm} />
-      <StarField count={400}  spread={120} sizeRange={[0.3, 1.0]} depth={5}  mouse={mouseNorm} />
+      <StarField count={lite ? 900 : 2500} spread={230} sizeRange={[0.4, 1.8]} depth={15} />
+      <StarField count={lite ? 300 : 1000} spread={180} sizeRange={[1.0, 3.0]} depth={10} />
+      <StarField count={lite ? 120 : 400}  spread={120} sizeRange={[0.3, 1.0]} depth={5}  />
 
-      <Nebulae />
+      {!lite && <Nebulae />}
       <ShootingStars />
       <EasterEggStars />
 
@@ -44,21 +45,29 @@ function SceneContent() {
 
 export function UniverseScene() {
   // Safe dpr: avoid window access at module level (SSR guard done by dynamic import)
-  const dpr: [number, number] = [1, 2];
+  const lite = useUniverseStore((s) => s.liteMode);
+  const modal = useUniverseStore((s) => !!s.activePlanet);
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    const update = () => setHidden(document.hidden);
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
 
   return (
     <Canvas
       camera={{ fov: 60, near: 0.05, far: 500, position: [0, 0, 12] }}
       gl={{
-        antialias: true,
-        alpha: true,
-        powerPreference: 'high-performance',
+        antialias: false,
+        alpha: false,
+        powerPreference: 'default',
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.9,
       }}
-      dpr={dpr}
+      dpr={lite ? 1 : [1, 1.5]}
+      onCreated={() => useUniverseStore.getState().setLoaded()}
       style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 0 }}
-      frameloop="always"
+      frameloop={hidden || modal ? 'never' : 'always'}
     >
       <SceneContent />
     </Canvas>

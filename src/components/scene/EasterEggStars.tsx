@@ -7,7 +7,7 @@ import { EASTER_EGGS } from '@/data/planets';
 import { useUniverseStore } from '@/lib/store';
 
 export function EasterEggStars() {
-  const { findEasterEgg } = useUniverseStore();
+  const findEasterEgg = useUniverseStore((s) => s.findEasterEgg);
   const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
   const timeRef = useRef(0);
 

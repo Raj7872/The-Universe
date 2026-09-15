@@ -90,3 +90,17 @@ Edit `src/data/planets.ts` to:
 - Star count scales with device; adjust `count` in `UniverseScene.tsx`
 - DPR capped at 2 for retina without performance cost
 - `useFrame` with smoothed ref values avoids React re-renders
+
+
+## Updated experience
+
+- Light mode defaults to 1,320 stars, pixel ratio 1, simpler spheres, and no nebula/firework layers. Disable it in Your universe for richer effects, capped at pixel ratio 1.5.
+- Stable star buffers avoid rebuilding during mouse movement. Native scrolling removes a continuous animation loop. The 3D renderer pauses behind memory dialogs and in hidden tabs.
+- Your universe provides keyboard and touch access to every memory and tracks opened planets during this visit.
+- Reading mode releases the 3D scene; reduced-motion preferences and scene errors select it automatically. It is also available from the loader.
+- Notes have previous/next controls, Escape dismissal, focus containment/restoration and mobile scrolling. Optional photoUrl and voiceNote fields in src/data/planets.ts now render in the dialog; put media in public and use paths such as /birthday-photo.jpg.
+- The finale has a symbolic wish button and replay; no wish data is collected.
+
+Personalize src/data/planets.ts before sharing: some original notes still contain general project-themed prose. Real memories and a personal signature in FinalScene.tsx will make the gift more meaningful.
+
+Validation: npm run type-check and npm run build. The existing next/font/google setup requires Google Fonts access during builds. Compare browser memory in a production build at the same viewport and pixel ratio; these configured reductions are not measured memory savings.

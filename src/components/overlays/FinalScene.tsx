@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useUniverseStore } from '@/lib/store';
 
 interface Firework {
@@ -99,7 +99,11 @@ const SANS: React.CSSProperties = {
 export function FinalScene() {
   const scrollProgress = useUniverseStore((s) => s.scrollProgress);
   const visible = scrollProgress >= 0.87;
-  const canvasRef = useFireworks(visible);
+  const [wished, setWished] = useState(false);
+  const lite = useUniverseStore((s) => s.liteMode);
+  const reading = useUniverseStore((s) => s.readingMode);
+  const canvasRef = useFireworks(visible && !lite && !reading);
+
 
   return (
     <>
@@ -166,6 +170,13 @@ export function FinalScene() {
               Made with more light than sleep ✦
             </motion.div>
 
+            <div className="flex gap-3 mt-6 pointer-events-auto">
+              <button className="journey-button" onClick={() => setWished(true)} disabled={wished}>
+                {wished ? 'Your wish has a place among the stars' : 'Make a birthday wish'}
+              </button>
+              <button className="journey-button" onClick={() => { setWished(false); window.scrollTo({ top: 0, behavior: 'instant' }); }}>Journey again</button>
+            </div>
+            <span role="status" className="sr-only">{wished ? 'May this next trip around the sun bring your wish closer.' : ''}</span>
             {/* Floating star accents */}
             {[...Array(5)].map((_, i) => (
               <motion.div

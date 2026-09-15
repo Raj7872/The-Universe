@@ -2,6 +2,7 @@
 
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { useUniverseStore } from '@/lib/store';
 import * as THREE from 'three';
 
 const vertexShader = `
@@ -45,7 +46,6 @@ interface StarFieldProps {
   spread?: number;
   sizeRange?: [number, number];
   depth?: number;
-  mouse?: { x: number; y: number };
 }
 
 export function StarField({
@@ -53,19 +53,18 @@ export function StarField({
   spread = 220,
   sizeRange = [0.4, 2.2],
   depth = 18,
-  mouse = { x: 0, y: 0 },
 }: StarFieldProps) {
   const matRef = useRef<THREE.ShaderMaterial>(null);
   const timeRef = useRef(0);
-  const mouseRef = useRef(mouse);
-  mouseRef.current = mouse;
+  const [minSize, maxSize] = sizeRange;
+  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uMouse: { value: new THREE.Vector2() } }), []);
 
   const { positions, sizes, alphas, speeds } = useMemo(() => {
     const positions = new Float32Array(count * 3);
     const sizes = new Float32Array(count);
     const alphas = new Float32Array(count);
     const speeds = new Float32Array(count);
-    const [sMin, sMax] = sizeRange;
+    const [sMin, sMax] = [minSize, maxSize];
 
     for (let i = 0; i < count; i++) {
       positions[i * 3]     = (Math.random() - 0.5) * spread;
@@ -76,13 +75,13 @@ export function StarField({
       speeds[i] = Math.random() * 2.5 + 0.5;
     }
     return { positions, sizes, alphas, speeds };
-  }, [count, spread, sizeRange, depth]);
+  }, [count, spread, minSize, maxSize, depth]);
 
   useFrame((_, delta) => {
     timeRef.current += delta * 0.5;
     if (matRef.current) {
       matRef.current.uniforms.uTime.value = timeRef.current;
-      matRef.current.uniforms.uMouse.value.set(mouseRef.current.x, mouseRef.current.y);
+      matRef.current.uniforms.uMouse.value.set(useUniverseStore.getState().mouseNorm.x, useUniverseStore.getState().mouseNorm.y);
     }
   });
 
@@ -98,10 +97,7 @@ export function StarField({
         ref={matRef}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
-        uniforms={{
-          uTime:  { value: 0 },
-          uMouse: { value: new THREE.Vector2(0, 0) },
-        }}
+        uniforms={uniforms}
         transparent
         depthWrite={false}
         blending={THREE.AdditiveBlending}

@@ -1,12 +1,12 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useUniverseStore } from '@/lib/store';
 
 const LABEL_STYLE: React.CSSProperties = {
   fontFamily: "'Jost', var(--font-sans), sans-serif",
-  fontWeight: 100,
+  fontWeight: 300,
   fontSize: '10px',
   letterSpacing: '0.5em',
   textTransform: 'uppercase',
@@ -20,12 +20,38 @@ const SERIF_STYLE: React.CSSProperties = {
 
 const SANS_STYLE: React.CSSProperties = {
   fontFamily: "'Jost', var(--font-sans), sans-serif",
-  fontWeight: 100,
+  fontWeight: 300,
 };
 
 export function MemoryModal() {
-  const { activePlanet, closePlanet } = useUniverseStore();
+  const activePlanet = useUniverseStore((s) => s.activePlanet);
+  const closePlanet = useUniverseStore((s) => s.closePlanet);
   const [msgIndex, setMsgIndex] = useState(0);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!activePlanet) return;
+    setMsgIndex(0);
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const dialog = dialogRef.current;
+    dialog?.querySelector<HTMLButtonElement>('button')?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closePlanet();
+      if (event.key !== 'Tab' || !dialog) return;
+      const buttons = Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled), a, audio[controls], [tabindex="0"]'));
+      const first = buttons[0], last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = overflow;
+      document.removeEventListener('keydown', onKey);
+      previous?.focus();
+    };
+  }, [activePlanet, closePlanet]);
+
 
   const allMessages = activePlanet
     ? [activePlanet.memory.message, ...(activePlanet.memory.secondaryMessages ?? [])]
@@ -47,14 +73,18 @@ export function MemoryModal() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
           style={{
-            backdropFilter: 'blur(28px)',
-            WebkitBackdropFilter: 'blur(28px)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             background: 'rgba(4,5,15,0.62)',
           }}
           onClick={handleBackdropClick}
         >
           <motion.div
             key="modal-card"
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="memory-title"
             className="relative w-full max-w-lg"
             initial={{ y: 36, scale: 0.93, opacity: 0 }}
             animate={{ y: 0, scale: 1, opacity: 1 }}
@@ -65,15 +95,17 @@ export function MemoryModal() {
               border: '1px solid rgba(201,168,76,0.18)',
               background: 'linear-gradient(135deg, rgba(8,10,24,0.92) 0%, rgba(12,14,32,0.95) 100%)',
               padding: 'clamp(2rem, 4vw, 3.5rem)',
+              maxHeight: '85dvh', overflowY: 'auto', overscrollBehavior: 'contain',
             }}
           >
             {/* Close */}
             <button
               onClick={handleBackdropClick}
-              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200"
+              aria-label="Close memory"
+              className="absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full transition-all duration-200"
               style={{
                 border: '1px solid rgba(245,240,232,0.15)',
-                color: 'rgba(245,240,232,0.35)',
+                color: 'rgba(245,240,232,0.8)',
                 background: 'transparent',
                 cursor: 'pointer',
                 ...SANS_STYLE,
@@ -93,7 +125,7 @@ export function MemoryModal() {
             </motion.div>
 
             {/* Title */}
-            <motion.h2
+            <motion.h2 id="memory-title"
               initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, ease: [0.22,1,0.36,1] }}
               style={{
@@ -123,16 +155,17 @@ export function MemoryModal() {
             {/* Message with cycling */}
             <AnimatePresence mode="wait">
               <motion.p
-                key={msgIndex}
+                key={`${activePlanet.id}-${msgIndex}`}
+                aria-live="polite"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.4 }}
                 style={{
                   ...SANS_STYLE,
-                  fontSize: 'clamp(12px, 1.3vw, 14px)',
+                  fontSize: 'clamp(15px, 1.3vw, 17px)',
                   lineHeight: 1.95,
-                  color: 'rgba(245,240,232,0.65)',
+                  color: 'rgba(245,240,232,0.85)',
                   marginBottom: '1.8rem',
                 }}
               >
@@ -140,30 +173,25 @@ export function MemoryModal() {
               </motion.p>
             </AnimatePresence>
 
-            {/* Message nav dots if multiple */}
+            {activePlanet.memory.photoUrl && (
+              <figure style={{ marginBottom: 24 }}>
+                {/* Personal media stays lazy-loaded until this memory is opened. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={activePlanet.memory.photoUrl} alt={`A memory from ${activePlanet.name}`} loading="lazy" style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 12 }} />
+              </figure>
+            )}
+            {activePlanet.memory.voiceNote && (
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ fontSize: 13, marginBottom: 8 }}>A little message for you</p>
+                <audio key={activePlanet.id} aria-label={`Voice note from ${activePlanet.name}`} controls preload="none" src={activePlanet.memory.voiceNote} style={{ width: '100%' }} />
+              </div>
+            )}
             {allMessages.length > 1 && (
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex gap-2 mb-5"
-              >
-                {allMessages.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setMsgIndex(i)}
-                    style={{
-                      width: i === msgIndex ? 18 : 5,
-                      height: 5,
-                      borderRadius: 3,
-                      background: i === msgIndex ? '#c9a84c' : 'rgba(245,240,232,0.2)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      padding: 0,
-                    }}
-                  />
-                ))}
-              </motion.div>
+              <nav aria-label="Memory notes" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 24 }}>
+                <button className="journey-button" disabled={msgIndex === 0} onClick={() => setMsgIndex((i) => Math.max(0, i - 1))}>Previous</button>
+                <span style={{ fontSize: 12, color: '#c9a84c' }}>{msgIndex + 1} / {allMessages.length}</span>
+                <button className="journey-button" disabled={msgIndex === allMessages.length - 1} onClick={() => setMsgIndex((i) => Math.min(allMessages.length - 1, i + 1))}>Next</button>
+              </nav>
             )}
 
             {/* Date */}

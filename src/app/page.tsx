@@ -1,10 +1,12 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useUniverseStore } from '@/lib/store';
+import { SceneBoundary } from '@/components/scene/SceneBoundary';
 import { useLenis }         from '@/hooks/useLenis';
 import { useMouseParallax } from '@/hooks/useMouseParallax';
 import { Loader }           from '@/components/ui/Loader';
-import { CustomCursor }     from '@/components/ui/CustomCursor';
+import { JourneyTools } from '@/components/ui/JourneyTools';
 import { UIChrome }         from '@/components/ui/UIChrome';
 import { OpeningOverlay }   from '@/components/overlays/OpeningOverlay';
 import { ChapterLabels }    from '@/components/overlays/ChapterLabels';
@@ -20,6 +22,7 @@ const UniverseScene = dynamic(
 );
 
 export default function Home() {
+  const reading = useUniverseStore((s) => s.readingMode);
   useLenis();
   useMouseParallax();
 
@@ -29,13 +32,13 @@ export default function Home() {
       <Loader />
 
       {/* Custom cursor (desktop only) */}
-      <CustomCursor />
+      <JourneyTools />
 
       {/* ── 3D Universe ── */}
-      <UniverseScene />
+      {reading ? <div aria-hidden="true" className="fixed inset-0" style={{ background: 'radial-gradient(ellipse at 25% 30%, #20203e 0%, #04050f 65%)' }} /> : <SceneBoundary><UniverseScene /></SceneBoundary>}
 
       {/* ── Canvas overlays ── */}
-      <ConstellationOverlay />
+      {!reading && <ConstellationOverlay />}
 
       {/* ── UI layers (pointer-events: none except interactive) ── */}
       <OpeningOverlay />
