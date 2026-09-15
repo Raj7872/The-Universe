@@ -1,6 +1,6 @@
 # 🌌 Our Universe — Cinematic Birthday Experience
 
-A fully cinematic, emotional, scroll-driven 3D birthday universe built with Next.js 15, React Three Fiber, GSAP, and Framer Motion.
+A fully cinematic, emotional, scroll-driven 3D birthday universe built with Next.js 15, React Three Fiber, and Framer Motion.
 
 ## ✨ Features
 
@@ -8,19 +8,19 @@ A fully cinematic, emotional, scroll-driven 3D birthday universe built with Next
 - **5 unique planets** — each with memories, atmosphere shaders, orbit particles, planet glow
 - **Animated constellations** — progressively drawn heart and name shapes between scenes
 - **Chapter narrative system** — story beats revealed through scroll
-- **Memory modal** — multi-message cycling, glassmorphism overlay, elegant typography
+- **Memory modal** — multi-message cycling, glassmorphism overlay, elegant typography, optional photo/voice-note per planet
 - **Shooting stars** — randomly spawned with trail particles
 - **Animated nebulae** — breathing, rotating volumetric cloud layers
 - **Space dust** — drifting fine particles with sine-wave motion
 - **Ambient audio** — rich drone with LFO breathing, reverb convolver, scroll-reactive volume
-- **Fireworks finale** — gold particle burst system in final birthday scene
+- **Fireworks finale** — gold particle burst system with a birthday wish button
 - **Easter egg stars** — 3 clickable hidden secrets in the universe
-- **Custom cursor** — ring + dot with planet hover expansion
+- **Journey navigation** — jump straight to any memory, toggle reading/lite mode
 - **Smooth scroll** — Lenis with exponential easing
 - **Mouse parallax** — multi-layer star field reacts to cursor position
 - **Cinematic loader** — cycling phrases, gold progress bar, fading star accents
 - **Progress navigation** — dots linking to scene sections
-- **Fully responsive** — mobile cursor fallback, coarse pointer detection
+- **Accessible by default** — keyboard/focus-trapped modal, ARIA roles, reduced-motion support, error boundary fallback to a lightweight reading mode
 
 ## 🚀 Quick Start
 
@@ -46,7 +46,8 @@ src/
 │   │   ├── StarField.tsx       — Multi-layer shader stars
 │   │   ├── ShootingStars.tsx   — Dynamic shooting stars
 │   │   ├── Nebulae.tsx         — Animated nebula clouds
-│   │   └── EasterEggStars.tsx  — Clickable hidden stars
+│   │   ├── EasterEggStars.tsx  — Clickable hidden stars
+│   │   └── SceneBoundary.tsx   — Error boundary, falls back to reading mode
 │   ├── planets/
 │   │   └── Planet.tsx          — Full planet with atmosphere
 │   ├── constellation/
@@ -59,8 +60,8 @@ src/
 │   │   ├── PlanetLabel.tsx     — Planet hover tooltip
 │   │   └── FinalScene.tsx      — Birthday finale + fireworks
 │   └── ui/
-│       ├── CustomCursor.tsx    — Ring/dot cursor
 │       ├── Loader.tsx          — Loading screen
+│       ├── JourneyTools.tsx    — Jump-to-memory nav, reading/lite mode toggles
 │       └── UIChrome.tsx        — Nav dots, audio, hints, toasts
 ├── data/
 │   └── planets.ts         — All planet, camera, chapter data
@@ -86,21 +87,29 @@ Edit `src/data/planets.ts` to:
 
 ## 🎛️ Performance
 
-- Mobile: coarse pointer detection disables custom cursor
-- Star count scales with device; adjust `count` in `UniverseScene.tsx`
-- DPR capped at 2 for retina without performance cost
-- `useFrame` with smoothed ref values avoids React re-renders
+- **Lite mode** (default on) caps the scene to ~1,320 stars, pixel ratio 1, simpler planet spheres, and drops the nebula/firework layers; toggle it off from the journey nav for the full effect (pixel ratio capped at 1.5).
+- Star buffers are stable across mouse movement so they never rebuild; the 3D renderer pauses when a memory modal is open or the tab is hidden.
+- `useFrame` with smoothed ref values avoids React re-renders.
+- **Reading mode** drops the 3D scene entirely in favor of a static gradient background — enabled automatically on `prefers-reduced-motion` or if the scene throws (via `SceneBoundary`), or manually from the loader/journey nav.
 
+## ♿ Accessibility
 
-## Updated experience
+- Memory modal: focus trap, Escape to close, `role="dialog"`/ARIA labeling, restores focus on close
+- Keyboard and touch access to every memory via the journey nav (`JourneyTools.tsx`), independent of scroll position
+- Respects `prefers-reduced-motion` — disables animation and switches to reading mode automatically
 
-- Light mode defaults to 1,320 stars, pixel ratio 1, simpler spheres, and no nebula/firework layers. Disable it in Your universe for richer effects, capped at pixel ratio 1.5.
-- Stable star buffers avoid rebuilding during mouse movement. Native scrolling removes a continuous animation loop. The 3D renderer pauses behind memory dialogs and in hidden tabs.
-- Your universe provides keyboard and touch access to every memory and tracks opened planets during this visit.
-- Reading mode releases the 3D scene; reduced-motion preferences and scene errors select it automatically. It is also available from the loader.
-- Notes have previous/next controls, Escape dismissal, focus containment/restoration and mobile scrolling. Optional photoUrl and voiceNote fields in src/data/planets.ts now render in the dialog; put media in public and use paths such as /birthday-photo.jpg.
-- The finale has a symbolic wish button and replay; no wish data is collected.
+## 🎨 Personalizing
 
-Personalize src/data/planets.ts before sharing: some original notes still contain general project-themed prose. Real memories and a personal signature in FinalScene.tsx will make the gift more meaningful.
+`src/data/planets.ts` currently ships with generic placeholder copy. Before using this as a real gift, edit that file to:
+- Replace the planet titles/messages with real memories
+- Set `photoUrl` / `voiceNote` per planet (optional) — drop media in `public/` and reference it as `/your-file.jpg`
+- Add a personal signature line in `FinalScene.tsx`
 
-Validation: npm run type-check and npm run build. The existing next/font/google setup requires Google Fonts access during builds. Compare browser memory in a production build at the same viewport and pixel ratio; these configured reductions are not measured memory savings.
+## ✅ Validation
+
+```bash
+npm run type-check
+npm run build
+```
+
+Requires network access to Google Fonts at build time (`next/font/google`).
